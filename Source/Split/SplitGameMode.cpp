@@ -7,6 +7,8 @@
 #include "EngineUtils.h"              
 #include "GameFramework/PlayerStart.h"
 #include "Camera/CameraComponent.h" 
+#include "Components/CapsuleComponent.h"
+#include "GameType.h"
 
 ASplitGameMode::ASplitGameMode()
 {
@@ -36,8 +38,8 @@ void ASplitGameMode::CloneCharacter()
         APlayerController* PC = It->Get();
         if (!PC || !PC->GetPawn()) continue;
 
-        FVector Offset = (PC->GetLocalPlayer()->GetControllerId() == 1) ? FVector(0, 0, 15300)
-            : FVector(0, 0, -14700);
+        FVector Offset = (PC->GetLocalPlayer()->GetControllerId() == 0) ? FVector(0, 0, 16000)
+            : FVector(0, 0, -14000);
 
         ASplitCharacter* SplitChar = Cast<ASplitCharacter>(PC->GetPawn());
 		if (!SplitChar || SplitChar->Tags.Contains(FName("Clone"))) {
@@ -50,6 +52,19 @@ void ASplitGameMode::CloneCharacter()
             SplitChar->GetActorRotation());
         if (!Clone) {
             return;
+        }
+
+        EObjectChannel Channel = (EObjectChannel)EObjectChannel::EOC_Character1;
+        if ((PC->GetLocalPlayer()->GetControllerId() == 0)) {
+            Channel = (EObjectChannel)EObjectChannel::EOC_Character2;
+        }
+
+        UCapsuleComponent* CapClone = Clone->GetCapsuleComponent();
+        if (CapClone)
+        {
+            CapClone->SetCollisionResponseToChannel(
+                static_cast<ECollisionChannel>(Channel),
+                ECR_Ignore);
         }
 
 		Clone->SpawnDefaultController();
@@ -65,6 +80,24 @@ void ASplitGameMode::CloneCharacter()
 
 void ASplitGameMode::BuildPlayerTwo()
 {
+    APlayerController* PC1 = UGameplayStatics::GetPlayerController(this, 0);
+
+    AActor* StartSpot1 = nullptr;
+    for (TActorIterator<APlayerStart> It(GetWorld()); It; ++It)
+    {
+        if (It->PlayerStartTag == FName("P1"))
+        {
+            StartSpot1 = *It;
+            break;
+        }
+    }
+
+    if (StartSpot1)
+    {
+        RestartPlayerAtPlayerStart(PC1, StartSpot1);
+    }
+
+     
     if (!UGameplayStatics::GetPlayerController(this, 1))
     {
         UGameplayStatics::CreatePlayer(GetWorld(), 1, true);

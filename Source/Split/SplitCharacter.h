@@ -49,6 +49,7 @@ public:
 
 	void ChangeMesh();
 
+	UPROPERTY(BlueprintReadWrite, Category = "Local Mesh")
 	ASplitCharacter* clonedCharacter;
 
 

@@ -10,6 +10,7 @@
 #include "EnhancedInputComponent.h"
 #include "EnhancedInputSubsystems.h"
 #include "InputActionValue.h"
+#include "GameType.h"
 
 DEFINE_LOG_CATEGORY(LogTemplateCharacter);
 
@@ -73,20 +74,43 @@ void ASplitCharacter::ChangeMesh()
 		if (MatPlayer0) {
 			GetMesh()->SetMaterial(0, MatPlayer0); 
 
-			UE_LOG(LogTemp, Display, TEXT("1111123"));
-			UE_LOG(LogTemp, Warning, TEXT("ID=%d Mesh=%s Mat=%s"),
-				Id,
-				*GetNameSafe(GetMesh()->SkeletalMesh),
-				*GetNameSafe(GetMesh()->GetMaterial(0)));
+			UCapsuleComponent* Cap = GetCapsuleComponent();
+			if (Cap)
+			{
+				Cap->SetCollisionResponseToChannel(
+					static_cast<ECollisionChannel>(EObjectChannel::EOC_Character2),
+					ECR_Ignore);
+			}
+
+			if (clonedCharacter) {
+				UCapsuleComponent* CapClone = clonedCharacter->GetCapsuleComponent();
+				UE_LOG(LogTemp, Display, TEXT("Toclone1channel"));
+				if (CapClone)
+				{
+					CapClone->SetCollisionResponseToChannel(
+						static_cast<ECollisionChannel>(EObjectChannel::EOC_Character2),
+						ECR_Ignore);
+					UE_LOG(LogTemp, Display, TEXT("clone1channel"));
+				}
+			}
 		}
 
 		break;
 	case 1:
 		if (MatPlayer1) {
 			GetMesh()->SetMaterial(0, MatPlayer1);
-			UE_LOG(LogTemp, Display, TEXT("2222123"));
+
+			UCapsuleComponent* Cap = GetCapsuleComponent();
+			if (Cap)
+			{
+				Cap->SetCollisionResponseToChannel(
+					static_cast<ECollisionChannel>(EObjectChannel::EOC_Character1),
+					ECR_Ignore);
+			}
+
 			if (clonedCharacter) {
 				clonedCharacter->GetMesh()->SetMaterial(0, MatPlayer1);
+
 			}
 		}
 
