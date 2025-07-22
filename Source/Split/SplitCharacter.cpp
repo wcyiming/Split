@@ -20,7 +20,11 @@ DEFINE_LOG_CATEGORY(LogTemplateCharacter);
 ASplitCharacter::ASplitCharacter()
 {
 	// Set size for collision capsule
-	GetCapsuleComponent()->InitCapsuleSize(42.f, 96.0f);
+	UCapsuleComponent* Capsule = GetCapsuleComponent();
+	Capsule->InitCapsuleSize(42.f, 96.0f);
+	Capsule->SetCollisionResponseToChannel(ECC_GameTraceChannel8, ECR_Block);
+	//Capsule->SetCollisionResponseToChannel(ECC_GameTraceChannel9, ECR_Ignore);
+	//Capsule->SetCollisionResponseToChannel(ECC_GameTraceChannel10, ECR_Ignore);
 		
 	// Don't rotate when the controller rotates. Let that just affect the camera.
 	bUseControllerRotationPitch = false;
@@ -54,6 +58,7 @@ ASplitCharacter::ASplitCharacter()
 	// Note: The skeletal mesh and anim blueprint references on the Mesh component (inherited from Character) 
 	// are set in the derived blueprint asset named ThirdPersonCharacter (to avoid direct content references in C++)
 
+	nowChannel = ECC_Pawn; // Default collision channel for this character
 
 
 }
@@ -183,7 +188,7 @@ void ASplitCharacter::Move(const FInputActionValue& Value)
 		AddMovementInput(RightDirection, MovementVector.X);
 
 		if (clonedCharacter) {
-			UE_LOG(LogTemp, Display, TEXT("Clone move"));
+			//UE_LOG(LogTemp, Display, TEXT("Clone move"));
 			clonedCharacter->AddMovementInput(ForwardDirection, MovementVector.Y);
 			clonedCharacter->AddMovementInput(RightDirection, MovementVector.X);
 		}
@@ -216,4 +221,78 @@ void ASplitCharacter::StopJumping() {
 		clonedCharacter->StopJumping();
 	}
 	Super::StopJumping();
+}
+
+void ASplitCharacter::BeginPlay()
+{
+	Super::BeginPlay();
+
+	// 0.2 秒循环射线检测
+	GetWorldTimerManager().SetTimer(
+		SliceCheckTimer,
+		this,
+		&ASplitCharacter::CheckSliceUnderFoot,
+		0.2f,
+		true,     /* loop */
+		0.0f);    /* first delay */
+}
+
+void ASplitCharacter::CheckSliceUnderFoot() {
+	FVector Start = GetActorLocation() + FVector(0, 0, 1000);
+	FVector End = Start - FVector(0, 0, 3000);
+
+	FHitResult Hit;
+	FCollisionQueryParams Params;
+	Params.bReturnPhysicalMaterial = false;
+	Params.AddIgnoredActor(this);
+
+
+
+	DrawDebugLine(GetWorld(), Start, End, FColor::Green, false, 0.25f);
+
+	bool bHit = GetWorld()->LineTraceSingleByChannel(
+		Hit,
+		Start,
+		End,
+		ECC_GameTraceChannel8,
+		Params);
+
+
+	if (!bHit) {
+		//UE_LOG(LogTemp, Display, TEXT("Noresult"));
+		return;
+	}
+
+	ECollisionChannel HitChannel = Hit.Component->GetCollisionObjectType();
+
+	if (HitChannel != nowChannel) {
+		UpdateCapsuleCollision(HitChannel);
+		nowChannel = HitChannel;
+	}
+}
+
+void ASplitCharacter::UpdateCapsuleCollision(ECollisionChannel NewChannel) {
+	
+	UE_LOG(LogTemp, Display, TEXT("Change"));
+	UE_LOG(LogTemp, Display, TEXT("Nice ChannelA = %s"), *UEnum::GetValueAsString(NewChannel));
+
+	UCapsuleComponent* Capsule = GetCapsuleComponent();
+	if (!Capsule) return;
+
+	if (Capsule->GetCollisionObjectType() == NewChannel)
+		return;                             
+
+
+	if (NewChannel == ECC_GameTraceChannel9)  //Channel A
+	{
+		Capsule->SetCollisionResponseToChannel(ECC_GameTraceChannel3, ECR_Ignore);
+		Capsule->SetCollisionResponseToChannel(ECC_GameTraceChannel5, ECR_Block);
+		UE_LOG(LogTemp, Display, TEXT("Nice ChannelA = %s"), *UEnum::GetValueAsString(NewChannel));
+	}
+	else if (NewChannel == ECC_GameTraceChannel10)  // Channel B
+	{
+		Capsule->SetCollisionResponseToChannel(ECC_GameTraceChannel5, ECR_Ignore);
+		Capsule->SetCollisionResponseToChannel(ECC_GameTraceChannel3, ECR_Block);
+		UE_LOG(LogTemp, Display, TEXT("Nice ChannelB = %s"), *UEnum::GetValueAsString(NewChannel));
+	}
 }

@@ -59,6 +59,9 @@ public:
 	UPROPERTY(EditDefaultsOnly, Category = "Local Mesh")
 	UMaterialInterface* MatPlayer1 = nullptr;
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	bool bUseCheckSlice = false;
+
 	
 
 protected:
@@ -71,6 +74,18 @@ protected:
 
 	void Jump();
 	void StopJumping();
+
+	virtual void BeginPlay() override;
+
+private:
+
+	void CheckSliceUnderFoot();
+
+
+	void UpdateCapsuleCollision(ECollisionChannel NewChannel);
+
+	ECollisionChannel nowChannel;
+	FTimerHandle SliceCheckTimer;
 
 			
 
