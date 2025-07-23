@@ -65,6 +65,7 @@ void ASplitGameMode::CloneCharacter()
             CapClone->SetCollisionResponseToChannel(
                 static_cast<ECollisionChannel>(Channel),
                 ECR_Ignore);
+            Clone->ChangeMesh();
         }
 
 		Clone->SpawnDefaultController();

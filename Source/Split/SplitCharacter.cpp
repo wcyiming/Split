@@ -227,14 +227,16 @@ void ASplitCharacter::BeginPlay()
 {
 	Super::BeginPlay();
 
-	// 0.2 秒循环射线检测
-	GetWorldTimerManager().SetTimer(
-		SliceCheckTimer,
-		this,
-		&ASplitCharacter::CheckSliceUnderFoot,
-		0.2f,
-		true,     /* loop */
-		0.0f);    /* first delay */
+	if (bUseCheckSlice) {
+		// 0.2 秒循环射线检测
+		GetWorldTimerManager().SetTimer(
+			SliceCheckTimer,
+			this,
+			&ASplitCharacter::CheckSliceUnderFoot,
+			0.2f,
+			true,     /* loop */
+			0.0f);    /* first delay */
+	}
 }
 
 void ASplitCharacter::CheckSliceUnderFoot() {
